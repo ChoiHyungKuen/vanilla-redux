@@ -1,44 +1,82 @@
-import {createStore} from 'redux';
+import { createStore } from "redux";
 
-const add = document.getElementById('add');
-const minus = document.getElementById('minus');
-const number = document.querySelector('span');
+const form = document.querySelector("form");
+const input = document.querySelector("input");
+const ul = document.querySelector("ul");
 
-number.innerText = 0;
+const ADD_TODO = 'ADD_TODO';
+const DELETE_TODO = 'DELETE_TODO';
 
-// 이렇게 변수로 쓰면 오타를 쳤을때 에러가 발생함..
-const ADD = 'ADD';
-const MINUS = 'MINUS';
 
-const countModifier = (count = 0, action) => {
-  console.log(count, action)
-  switch(action.type) {
-    case ADD:
-      return count + 1;
-    case MINUS:
-      return count -1;
-    default:
-      return count;
+// 최대한 잘게 쪼개서 하나의 단위로 만들어줌
+const addToDo = (text) => {
+  return {
+    type: ADD_TODO, text
+  }
+}
+const deleteToDo = (id) => {
+  return {
+    type: DELETE_TODO, id
   }
 }
 
-const countStore = createStore(countModifier);
+//mutate를 안하는게 redux 핵심! 직접수정안하고 새로운 값으로 리턴하게..
+const reducer = (state = [], action) => {
+  console.log(action)
+  switch(action.type) {
+    case ADD_TODO:
+      return [{text: action.text, id: Date.now()}, ...state ];
+    case DELETE_TODO:
+      return state.filter(toDo => toDo.id !== action.id);
+    default:
+      return state;
+  }
+};
 
-const onChange = () => {
-  console.log(' 변경됬습니다 ' + countStore.getState())
-  number.innerText = countStore.getState()
+const store = createStore(reducer);
+
+const dispatchAddToDo = (text) => {
+  store.dispatch(addToDo(text))
 }
 
-countStore.subscribe(onChange)
-
-const handleAdd = () => {
-  countStore.dispatch({type: ADD})
+const dispatchDeleteToDo = (e) => {
+  const id = parseInt(e.target.parentNode.id);
+  store.dispatch(deleteToDo(id));
+  
 }
 
-const handleMinus = () => {
-  countStore.dispatch({type: MINUS})
+const paintToDos = () => {
+  const toDos = store.getState();
+  ul.innerHTML = '';
+  toDos.forEach(toDo => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+
+    btn.innerText ='DEL';
+    btn.addEventListener('click', dispatchDeleteToDo);
+
+    li.id = toDo.id;
+    li.innerText = toDo.text;
+    li.appendChild(btn)
+    ul.appendChild(li);
+  });
 }
 
-add.addEventListener('click', handleAdd );
-minus.addEventListener('click', handleMinus);
+store.subscribe(paintToDos);
 
+
+// const createToDo = toDo => {
+//   const li = document.createElement('li');
+//   li.innerText = toDo;
+//   ul.appendChild(li);
+// }
+
+
+const onSubmit = (e) => {
+  e.preventDefault();
+  const toDo = input.value;
+  input.value = '';
+  dispatchAddToDo(toDo);
+}
+
+form.addEventListener('submit', onSubmit);
