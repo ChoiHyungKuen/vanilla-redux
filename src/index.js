@@ -25,7 +25,7 @@ const countModifier = (count = 0, action) => {
 const countStore = createStore(countModifier);
 
 const onChange = () => {
-  console.log('스토어가 변경됬습니다~ ' + countStore.getState())
+  console.log(' 변경됬습니다 ' + countStore.getState())
   number.innerText = countStore.getState()
 }
 
